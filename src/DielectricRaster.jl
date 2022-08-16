@@ -503,8 +503,98 @@ end # SquareOperations
 
 ## Q4
 function find_nearest_surface_normal(s::Square, coord)
-    # implement me
-end
+
+    normalize!(vector) = vector ./ distance_formula((0, 0), (vector[1], vector[2]))
+
+    solution_map = Dict(
+    "top" => [0.0 1.0],
+    "bot" => [0.0 -1.0],
+    "left" => [-1.0 0.0],
+    "right" => [1.0 0.0],
+    "urc" => [1/sqrt(2) 1/sqrt(2)],
+    "ulc" => [-1/sqrt(2) 1/sqrt(2)],
+    "llc" => [-1/sqrt(2) -1/sqrt(2)],
+    "lrc" => [1/sqrt(2) -1/sqrt(2)],
+    "zero" => [0.0 0.0]
+)
+    
+    # When coord is inside, there are some special cases that immediately give the solution
+    if point_is_inside(coord, s)
+        # Check if coord is the Square center
+        if fuzzy_eq(coord, (s.x, s.y))
+            return solution_map["zero"]
+        end
+
+        # Check if coord is a corner
+        if point_is_corner(coord, s)
+            return solution_map[which_corner(coord, s)]
+        end
+
+        # Check if coord lies on a surface
+        if point_is_on_surface(coord, s)
+            return solution_map[which_surface(coord, s)]
+        end
+    end
+    
+    # None of the special cases occurred so, iterate through the distances to each target
+    
+    # Container for candidate targets
+    candidate = Dict()
+    min_dist = Inf
+    min_target = ""
+    
+    for surface in ("top", "bot", "left", "right")
+        dist2surf = distance_to_surface(coord, s, surface)
+        # If dist_to_surface ≈ min_dist
+        if dist2surf ≈ min_dist
+            # Record a tie in candidate
+            candidate[surface] = dist2surf
+        # If dist_to_surface < min_dist
+        elseif dist2surf < min_dist
+            # There is a new minimum distance and corresponding target
+            for key in keys(candidate)
+                delete!(candidate, key)
+            end
+            # Record the new min_dist
+            min_dist = dist2surf
+            # Record the new min_target
+            min_target = surface
+            # Record the best candidate
+            candidate[min_target] = min_dist
+        end
+    end
+    
+
+    for corner in ("ulc", "urc", "llc", "lrc")
+        dist2cor = distance_to_corner(coord, s, corner)
+        # If dist_to_corner ≈ min_dist
+        if dist2cor ≈ min_dist
+            # Record a tie
+            candidate[min_target] = min_dist
+        # If dist_to_corner < min_dist
+        elseif dist2cor < min_dist
+            # There is a new minimum distance and corresponding target
+            for key in keys(candidate)
+                delete!(candidate, key)
+            end
+            # Record the new min_dist
+            min_dist = dist2cor
+            # Record the new min_target
+            min_target = corner
+            # Record the best candidate
+            candidate[min_target] = min_dist
+        end
+    end
+    
+    # Average the best candidates
+    solution = [0 0]
+    for key in keys(candidate)
+        solution = (solution .+ solution_map[key])
+    end
+    solution = solution ./ size(collect(keys(candidate)), 1)
+    normalize!(solution)
+    
+end  
 
 ## Q5
 function orient_along_normal(A, normal)
