@@ -598,8 +598,12 @@ end
 
 ## Q5
 function orient_along_normal(A, normal)
-    # implement me
-    # return `A` oriented in a new reference frame with one axes parallel to `normal`
+    # Calculate the amount to rotate by
+    rotation_angle = (π/2) - atan(normal[2], normal[1])
+    # Populate the rotation matrix
+    R = [cos(rad) -sin(rad); sin(rad) cos(rad)]
+    # Apply a rotation on A
+    R * A
 end
 
 ## Q6, OPTIONAL
