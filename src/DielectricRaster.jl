@@ -281,6 +281,226 @@ end
 
 end # FuzzyComparisons
 
+
+module SquareOperations
+#=
+    This module provides methods for querying the relationship between `Square`s
+    and points in the plane. 
+
+    For example, determining if a point is on the boundary of a given `Square`
+    or if a point is also a corner.
+
+
+    Throughout, a *surface* is an open range along the boundary of a `Square`.
+    
+    For example, a `Square` centered at (0, 0) with width 2 (units) has a top 
+    surface comprised of all points with y-coordinate = 1 and x-coordinate 
+    satisfying -1 < x < 1.
+=#
+
+# Canonical distance formula is used througout this module
+distance_formula(a::Tuple, b::Tuple) = sqrt((a[1] - b[1])^2 + (a[2] - b[2])^2)
+
+# Corner shorthand:  [(U)pper/(L)ower] [(L)eft/(R)ight] (C)orner
+urc(s::Square) = (s.x + s.w/2, s.y + s.w/2)
+ulc(s::Square) = (s.x - s.w/2, s.y + s.w/2)
+llc(s::Square) = (s.x - s.w/2, s.y - s.w/2)
+lrc(s::Square) = (s.x + s.w/2, s.y - s.w/2)
+corners(s::Square) = (urc(s), ulc(s), llc(s), lrc(s))
+
+
+function point_is_corner(p::Tuple, s::Square)
+    # Assume point is not a corner
+    result = false
+    
+    # Compare point with coordinates of the corners
+    for corner in (urc(s), ulc(s), llc(s), lrc(s))
+        if fuzzy_eq(p, corner)
+            result = true
+        end
+    end
+
+    result
+end
+
+
+function which_corner(p::Tuple, s::Square)
+    fwd = Dict(
+        "urc" => (s.x + s.w/2, s.x + s.w/2),
+        "ulc" => (s.x - s.w/2, s.x + s.w/2),
+        "llc" => (s.x - s.w/2, s.x - s.w/2),
+        "lrc" => (s.x + s.w/2, s.x - s.w/2)
+    )
+    
+    bkd = Dict(v => k for (k, v) in fwd)
+    
+    bkd[p]
+end
+
+# Check if a point is or is not on a specific surface
+point_on_top(p::Tuple, s::Square) = (p[2] ≈ (s.y + s.w/2)) && fuzzy_in_open_range(ulc(s)[1], p[1], urc(s)[1])
+point_on_bot(p::Tuple, s::Square) = (p[2] ≈ (s.y - s.w/2)) && fuzzy_in_open_range(llc(s)[1], p[1], lrc(s)[1])
+point_on_left(p::Tuple, s::Square) = (p[1] ≈ (s.x - s.w/2)) && fuzzy_in_open_range(llc(s)[2], p[2], ulc(s)[2])
+point_on_right(p::Tuple, s::Square) = (p[1] ≈ (s.x + s.w/2)) && fuzzy_in_open_range(lrc(s)[2], p[2], urc(s)[2])
+
+# Check if a point is on any surface
+function point_is_on_surface(p::Tuple, s::Square)
+    result = false
+    
+    if point_on_top(p, s)
+        result = true
+    end
+        
+    if point_on_bot(p, s)
+        result = true
+    end
+    
+    if point_on_left(p, s)
+        result = true
+    end
+    
+    if point_on_right(p, s)
+        result = true
+    end
+    
+    result 
+end
+
+function which_surface(p::Tuple, s::Square)
+    surface = ""
+    
+    if point_on_top(p, s)
+        surface = "top"
+    end
+        
+    if point_on_bot(p, s)
+        surface = "bot"
+    end
+    
+    if point_on_left(p, s)
+        surface = "left"
+    end
+    
+    if point_on_right(p, s)
+        surface = "right"
+    end
+    
+    surface 
+end
+
+# Check if a point is within the boundary of `Square`
+function square_contains_point(p::Tuple, s::Square)
+    fuzzy_in_open_range(ulc(s)[1], p[1], urc(s)[1]) && fuzzy_in_open_range(llc(s)[2], p[2], ulc(s)[2])
+end
+
+#=
+    Classifying a point as *inside* a `Square` yields some advantages for
+    calculating the closest surface normal.
+
+    Throughout, a point is defined as inside when one of the following statements
+    is true
+
+    1. The point is itself the center of `Square`
+    2. The point is one of the corners of `Square`
+    3. The point lies on one of the `Square` surfaces
+    4. The point lies on the interior of the `Square` boundary
+
+=#
+function point_is_inside(p::Tuple, s::Square)
+    # Assume point is not inside
+    result = false
+    
+    # Check if p is the Square center
+    if fuzzy_eq(p, (s.x, s.y))
+        result = true
+    end
+    
+    # Check if p is a corner
+    if point_is_corner(p, s)
+        result = true
+    end
+    
+    # Check if p lies on a surface
+    if point_is_on_surface(p, s)
+        result = true
+    end
+    
+    # Check if s contains p
+    if square_contains_point(p, s)
+        result = true
+    end
+    
+    result 
+end
+
+# Check if dropping a perpendicular from p intersects with a surface
+drop_perp_to_top(p::Tuple, s::Square) = point_on_top((p[1], (s.y + s.w/2)), s)
+drop_perp_to_bot(p::Tuple, s::Square) = point_on_bot((p[1], (s.y - s.w/2)), s)
+drop_perp_to_left(p::Tuple, s::Square) = point_on_left(((s.x - s.w/2), p[2]), s)
+drop_perp_to_right(p::Tuple, s::Square) = point_on_right(((s.x + s.w/2), p[2]), s)
+
+function distance_to_surface(p::Tuple, s::Square, surface)
+    surfaces = Dict(
+        "top" => (p[1], (s.y + s.w/2)),
+        "bot" => (p[1], (s.y - s.w/2)),
+        "left" => ((s.x - s.w/2), p[2]),
+        "right" => ((s.x + s.w/2), p[2])
+    )
+    
+    if surface == "top"
+        # A surface is only a candidate solution if dropping a perpendicular from p lands on the surface
+        if drop_perp_to_top(p, s)
+            return distance_formula(p, surfaces[surface])
+        # This entry will be eliminated when distances are filtered 
+        else
+            return Inf
+        end
+    end
+    
+    if surface == "bot"
+        # A surface is only a candidate solution if dropping a perpendicular from p lands on the surface
+        if drop_perp_to_bot(p, s)
+            return distance_formula(p, surfaces[surface])
+        # This entry will be eliminated when distances are filtered 
+        else
+            return Inf
+        end
+    end
+        
+    if surface == "left"
+        # A surface is only a candidate solution if dropping a perpendicular from p lands on the surface
+        if drop_perp_to_left(p, s)
+            return distance_formula(p, surfaces[surface])
+        # This entry will be eliminated when distances are filtered 
+        else
+            return Inf
+        end
+    end
+                            
+    if surface == "right"
+        # A surface is only a candidate solution if dropping a perpendicular from p lands on the surface
+        if drop_perp_to_right(p, s)
+            return distance_formula(p, surfaces[surface])
+        # This entry will be eliminated when distances are filtered 
+        else
+            return Inf  
+        end
+    end
+
+end
+
+function distance_to_corner(p::Tuple, s::Square, corner)
+    corners = Dict(
+        "ulc" => ulc(s),
+        "urc" => urc(s),
+        "llc" => llc(s),
+        "lrc" => lrc(s)
+    )
+    distance_formula(p, corners[corner])
+end
+
+end # SquareOperations
+
 ## Q4
 function find_nearest_surface_normal(s::Square, coord)
     # implement me
