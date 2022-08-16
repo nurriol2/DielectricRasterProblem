@@ -126,6 +126,31 @@ function overlapping_area(A::GriddedArray, index::Int64, s::Square)
     max(0, w_prime(A, index, s)) * max(0, h_prime(A, index, s))
 end
 
+#= 
+    For future problems, it will be useful to construct the raster matrix without
+    without modifying the underlying matrix.
+=#
+function raster_area(A::GriddedArray, s::Square)
+    
+    # Create a copy of the unmodified GriddedArray
+    # FIXME:  Potentially expensive operation
+    A′ = deepcopy(A)
+    
+    # Calculate the total area of a single pixel
+    pixel_area = total_pixel_area(A′)
+
+    # Iterate over the pixels in A
+    for index in eachindex(A′.pixels)
+        # Calculate the overlapping area
+        overlap_area = overlapping_area(A′, index, s)
+        # Calculate the target
+        # Assign the value of the target to the current element in A
+        A′.pixels[index] = (overlap_area / pixel_area)
+    end
+    A′
+end
+
+
 end # RectangleAbstraction
 
 ## Q1
