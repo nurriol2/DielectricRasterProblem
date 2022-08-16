@@ -188,7 +188,7 @@ function raster_scalar_dielectric!(A::GriddedArray, s::Square)
     solution_matrix = (A.pixels .* C) + (K_square .* O)
 
     #=
-        FIXME:  The only way I've found to actually mutate a matrix in place 
+        HACK:  The only way I've found to actually mutate a matrix in place 
                 is by iterating over its elements and setting the value.
                 This approach can be extremely slow.
                 With more practice writing Julia, I'm confident there is an
@@ -203,7 +203,25 @@ end
 
 ## Q3
 function raster_harmonic!(A::GriddedArray, s::Square)
-    # implement me
+    # Intersectional area matrix
+    O = raster_area(A, s).pixels 
+    # "Compliment" to the intersectional area matrix
+    C = ones(size(A.pixels)) - O 
+    # Introduces the dielectric constant in matrix form for formula below 
+    K_square = s.dielectric .* ones(size(A.pixels))
+
+    # This solution does not modify the matrix
+    ((A.pixels) .* K_square) ./ ((K_square .* C) .+ (A.pixels .* O))
+    
+    #=
+        HACK:  The only way I've found to actually mutate a matrix in place 
+                is by iterating over its elements and setting the value.
+                This approach can be extremely slow.
+                With more practice writing Julia, I'm confident there is an
+                idiomatic way to do this common operation. 
+                The built-in `replace!()` method looked promising.
+    =#
+    
 end
 
 ## Q4
