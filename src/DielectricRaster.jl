@@ -249,6 +249,9 @@ function fuzzy_in_open_range(lep, x, rep)
 
             julia> fuzzy_in_open_range(1.0, 2.0, 2.0)
             false
+
+            julia> fuzzy_in_open_range(2.0, 1.5, 1.0)
+            ERROR:  ArgumentError
         ```
 
         Raises:
