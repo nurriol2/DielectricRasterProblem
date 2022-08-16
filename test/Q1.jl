@@ -3,8 +3,10 @@
     s = Square(0.5, 1.0, 0.75, 1.0)
     pixel_area = (1/4) * (2/4)
 
-    raster_area!(A, s)
+    @test pixel_width(A) ≈ (1/4)
+    @test pixel_height(A) ≈ (2/4)
 
+    raster_area!(A, s)
     # Test consistency of raster
     @test sum(A.pixels * pixel_area) == (s.w)^2
 
