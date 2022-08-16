@@ -130,8 +130,19 @@ end # RectangleAbstraction
 
 ## Q1
 function raster_area!(A::GriddedArray, s::Square)
-    # implement me
+    # Calculate the total area of a single pixel
+    pixel_area = total_pixel_area(A)
+
+    # Iterate over the pixels in A
+    for index in eachindex(A.pixels)
+        # Calculate the overlapping area
+        overlap_area = overlapping_area(A, index, s)
+        # Assign the ratio of areas to the current pixel in A
+        A.pixels[index] = (overlap_area / pixel_area)
+    end
+    A
 end
+
 
 ## Q2
 function raster_scalar_dielectric!(A::GriddedArray, s::Square)
