@@ -1,3 +1,17 @@
+# Assignment Submission
+
+As a relative newcomer to Julia, a Jupyter notebook provided the best way for me to quickly get started solving these problems.
+
+The additional markdown cells also allowed me to record my problem solving process alongside the code. Hopefully these notes can be useful during our discussion.
+
+However, I understand that there are challenges when it comes to versioning and testing Jupyter notebooks. Furthermore, I don't believe a notebook was the intended way to submit a solution.
+
+As a result, I've done my best to fill out the template file in a manner very closely approximating how I would've written the code with the intention of executing it as a script.
+
+As the reader may notice, the script will not compile nor pass any of the tests in this state. For the purposes of my own education, I will continue to improve upon this script. For the purposes of this test, though, I am satisfied with my submission. 
+
+---
+
 # Directions
 
 This is a programming task as part of the interview process for a Software Engineer position at Metalenz. 
