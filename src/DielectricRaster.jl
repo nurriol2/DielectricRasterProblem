@@ -224,6 +224,60 @@ function raster_harmonic!(A::GriddedArray, s::Square)
     
 end
 
+module FuzzyComparisons
+
+function fuzzy_eq(a::Tuple, b::Tuple)
+    (a[1] ≈ b[1]) && (a[2] ≈ (b[2]))
+end
+
+function fuzzy_leq(left, right)
+    (left < right) || (left ≈ right)
+end
+
+function fuzzy_in_open_range(lep, x, rep)
+
+    #=
+        Check if x is inside the open range (lep, rep).
+        
+        Examples:
+            ```
+            julia> fuzzy_in_open_range(1.0, 1.5, 2.0)
+            true
+
+            julia> fuzzy_in_open_range(1.0, 1.0, 2.0)
+            false
+
+            julia> fuzzy_in_open_range(1.0, 2.0, 2.0)
+            false
+        ```
+
+        Raises:
+            ArgumentError: If endpoints are equal OR `rep` < `lep`
+    =#
+    
+    # Since the range is open, x cannot be lep or rep
+    
+    # TODO:  Write custom errors with explanation of argument order
+    if fuzzy_leq(rep, lep)
+        throw(ArgumentError)
+    end
+   
+    # Check if the point is one of the endpoints
+    if x ≈ lep
+        return false
+    end
+    
+    if x ≈ rep
+        return false
+    end
+       
+    # Only eval to true when x is strictly in the open range
+    fuzzy_leq(lep, x) && fuzzy_leq(x, rep)
+    
+end
+
+end # FuzzyComparisons
+
 ## Q4
 function find_nearest_surface_normal(s::Square, coord)
     # implement me
